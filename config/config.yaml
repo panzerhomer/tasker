@@ -1,0 +1,13 @@
+env: "local"
+http_server:
+  address: "localhost:8080"
+  timeout: 4s
+  idle_timeout: 30s
+database:
+  user: "user"
+  password: "passwd"
+  host: "localhost"
+  port: 5442
+  dbname: "rest"
+  sslmode: "disable"
+  
