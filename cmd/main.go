@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
+	cfg, _ := config.LoadConfig()
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		cfg.Database.Host,
@@ -44,5 +44,7 @@ func main() {
 
 	r := userHandler.Routes()
 	log.Println("server is running")
-	http.ListenAndServe(":3000", r)
+	if err := http.ListenAndServe(":3000", r); err != nil {
+		log.Fatal("server stopped with ", err)
+	}
 }
