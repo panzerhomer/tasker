@@ -1,42 +1,47 @@
-CREATE TABLE tasks (
-	id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE,
-    description VARCHAR(600)
-);
-
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-	email VARCHAR(255) UNIQUE,
-	password VARCHAR(255)
+    user_id SERIAL PRIMARY KEY,
+    username VARCHAR(50),
+    email VARCHAR(100) UNIQUE NOT NULL,
+    -- role VARCHAR(100)
+    -- roles VARCHAR(100)[], -- select * where (unnest(users.roles) intersect unnest(projects.roles)) is not null
+    password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE users_tasks (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    task_id INT REFERENCES tasks(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expired_at TIMESTAMP,
-    CONSTRAINT unique_user_task UNIQUE (user_id, task_id)
+CREATE TABLE projects (
+    project_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT
+    -- author_id INT NOT NULL,
+    -- roles VARCHAR(100)[], 
 );
 
-CREATE TABLE users_tasks_history (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    task_id INT REFERENCES tasks(id) ON DELETE CASCADE,
-    action VARCHAR(30) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE user_projects (
+    user_id INT,
+    project_id INT,
+    user_role SMALLINT NOT NULL,
+    PRIMARY KEY (user_id, project_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(project_id)
 );
 
+CREATE TABLE tasks (
+    task_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    status SMALLINT NOT NULL,
+    deadline TIMESTAMPTZ,
+    project_id INT,
+    assigned_user_id INT,
+    FOREIGN KEY (project_id) REFERENCES projects(project_id),
+    FOREIGN KEY (assigned_user_id) REFERENCES users(user_id)
+);
 
-CREATE OR REPLACE FUNCTION check_and_delete()
-RETURNS TRIGGER AS $$
-BEGIN
-    DELETE FROM users_tasks WHERE expired_at < NOW();
-    RETURN NEW;
-END;
-
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER delete_expired_tasks_trigger
-    AFTER INSERT ON users_tasks
-    EXECUTE FUNCTION check_and_delete();
+-- CREATE TABLE task_assignments (
+--     task_assignment_id SERIAL PRIMARY KEY,
+--     task_id INT,
+--     user_id INT,
+--     assignment_date TIMESTAMPTZ,
+--     completion_date TIMESTAMPTZ,
+--     FOREIGN KEY (task_id) REFERENCES tasks(task_id),
+--     FOREIGN KEY (user_id) REFERENCES users(user_id)
+-- );

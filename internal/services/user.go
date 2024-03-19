@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"rest/internal/domain"
 	"rest/internal/lib/hasher"
 	"rest/internal/lib/jwt"
@@ -9,25 +10,29 @@ import (
 	"time"
 )
 
-type UserService struct {
+type userService struct {
 	repo repository.UserRepository
 }
 
-func NewUserService(repo repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository) *userService {
+	return &userService{repo: repo}
 }
 
-func (us *UserService) Login(ctx context.Context, user *domain.User) (string, error) {
-	u, err := us.repo.GetUser(ctx, user.Email)
+func (s *userService) Login(ctx context.Context, user *domain.User) (string, error) {
+	u, err := s.repo.GetUserByEmail(ctx, user.Email)
 	if err != nil {
 		return "", err
 	}
+
 	err = hasher.CheckPassword(user.Password, u.Password)
 	if err != nil {
 		return "", err
 	}
 
-	token, err := jwt.NewToken(u, time.Minute)
+	// log.Println("[service]", user)
+	token, err := jwt.NewToken(u, time.Minute*5)
+	log.Println("[service]", user, token, "d", err)
+
 	if err != nil {
 		return "", err
 	}
@@ -35,12 +40,7 @@ func (us *UserService) Login(ctx context.Context, user *domain.User) (string, er
 	return token, nil
 }
 
-func (us *UserService) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	// _, err := us.repo.GetUser(ctx, user.Email)
-	// if err == nil {
-	// 	return nil, fmt.Errorf("user exist")
-	// }
-
+func (s *userService) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 	hashedPassword, err := hasher.HashPassword(user.Password)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (us *UserService) CreateUser(ctx context.Context, user *domain.User) (*doma
 		Password: hashedPassword,
 	}
 
-	id, err := us.repo.InsertUser(ctx, u.Email, u.Password)
+	id, err := s.repo.InsertUser(ctx, u)
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +59,13 @@ func (us *UserService) CreateUser(ctx context.Context, user *domain.User) (*doma
 	u.ID = id
 
 	return u, nil
+}
+
+func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	user, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

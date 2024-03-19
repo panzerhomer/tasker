@@ -13,6 +13,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var ctx = context.Background()
+
 func main() {
 	cfg, _ := config.LoadConfig()
 
@@ -25,24 +27,32 @@ func main() {
 		cfg.Database.SSLMode,
 	)
 
-	conn, err := pgx.Connect(context.Background(), dsn)
+	// log.Println(dsn)
+	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		log.Fatalf("unable to connect to database: %v\n", err)
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
-	if err = conn.Ping(context.Background()); err != nil {
+	if err = conn.Ping(ctx); err != nil {
 		log.Fatalf("can't ping db: %s", err)
 	}
 
-	// r := chi.NewRouter()
-	// r.Use(middleware.RequestID)
-	// r.Use(middleware.Logger)
-	userRepo := repository.NewUserRepository(conn)
+	//conn.Exec(ctx, "DELETE FROM users")
+
+	userRepo := repository.NewUserRepo(conn)
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	r := userHandler.Routes()
+	taskRepo := repository.NewTaskRepo(conn)
+	taskService := services.NewTaskService(taskRepo)
+	taskHandler := handlers.NewTaskHandler(taskService)
+
+	projectRepo := repository.NewProjectRepo(conn)
+	projectService := services.NewProjectService(projectRepo)
+	projectHandler := handlers.NewProjectHandler(projectService)
+
+	r := handlers.Routes(userHandler, taskHandler, projectHandler)
 	log.Println("server is running")
 	if err := http.ListenAndServe(":3000", r); err != nil {
 		log.Fatal("server stopped with ", err)

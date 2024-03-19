@@ -3,80 +3,66 @@ package repository
 import (
 	"context"
 	"fmt"
-	"log"
 	"rest/internal/domain"
 
 	"github.com/jackc/pgx/v5"
 )
 
 type userRepo struct {
-	// db *sqlx.DB
 	db *pgx.Conn
 }
 
-func NewUserRepository(db *pgx.Conn) *userRepo {
+func NewUserRepo(db *pgx.Conn) *userRepo {
 	return &userRepo{db}
 }
 
-func (ur *userRepo) InsertUser(ctx context.Context, email string, password string) (int64, error) {
-	const query = "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id"
+func (r *userRepo) InsertUser(ctx context.Context, user *domain.User) (int64, error) {
+	const query = "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING user_id"
 
-	// stmt, err := ur.db.Prepare(query)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%w", err)
-	// }
-
-	stmt, err := ur.db.Prepare(ctx, "inserUser", query)
+	stmt, err := r.db.Prepare(ctx, "insertUser", query)
 	if err != nil {
-		log.Println("[err insertuser stmt ]", stmt, err)
 		return 0, fmt.Errorf("%w", err)
 	}
-
-	// result, err := ur.db.ExecEx(ctx, stmt.Name, nil, email, password)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%w", err)
-	// }
 
 	var id int64
-	err = ur.db.QueryRow(context.Background(), stmt.Name, email, password).Scan(&id)
+	err = r.db.QueryRow(ctx, stmt.Name, user.Email, user.Password).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("%w", err)
 	}
-
-	// result, err := stmt.ExecContext(ctx, email, password)
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%w", err)
-	// }
-
-	// id, err := result.LastInsertId()
-	// if err != nil {
-	// 	return 0, fmt.Errorf("%w", err)
-	// }
 
 	return id, nil
 }
 
-func (ur *userRepo) GetUser(ctx context.Context, email string) (*domain.User, error) {
-	const query = "SELECT id, email, password FROM users WHERE email = $1"
-
-	// stmt, err := ur.db.Prepare(query)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("%w", err)
-	// }
-
-	// row := stmt.QueryRowContext(ctx, email)
+func (r *userRepo) GetUserByID(ctx context.Context, userID int64) (*domain.User, error) {
+	const query = "SELECT user_id, email, password FROM users WHERE user_id = $1"
 
 	var user domain.User
-	// err = row.Scan(&user.ID, &user.Email, &user.Password)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("%w", err)
-	// }
-	stmt, err := ur.db.Prepare(ctx, "selectUser", query)
+
+	stmt, err := r.db.Prepare(ctx, "selectUserById", query)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	err = ur.db.QueryRow(ctx, stmt.Name, email).Scan(&user.ID, &user.Email, &user.Password)
+	err = r.db.QueryRow(ctx, stmt.Name, userID).Scan(&user.ID, &user.Email, &user.Password)
+
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	return &user, nil
+}
+
+func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	const query = "SELECT user_id, email, password FROM users WHERE email = $1"
+
+	var user domain.User
+
+	stmt, err := r.db.Prepare(ctx, "selectUserByEmail", query)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	err = r.db.QueryRow(ctx, stmt.Name, email).Scan(&user.ID, &user.Email, &user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
