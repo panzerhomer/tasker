@@ -12,7 +12,7 @@ func Routes(userHandler *UserHandler, taskHandler *TaskHandler, projectHandler *
 	root.Use(middleware.Logger)
 	root.Use(middleware.RequestID)
 	root.Post("/login", userHandler.Login)
-	root.Post("/signin", userHandler.Signin)
+	root.Post("/signup", userHandler.Signup)
 
 	r := chi.NewRouter()
 	r.Use(authmid.Auth)
@@ -21,7 +21,11 @@ func Routes(userHandler *UserHandler, taskHandler *TaskHandler, projectHandler *
 
 	r.Post("/projects", projectHandler.CreateProject)
 	r.Get("/projects", projectHandler.GetAllProjects)
+	r.Get("/projects/{name}/users", projectHandler.GetAllProjectUsers)
 	r.Put("/projects/{name}", projectHandler.JoinProject)
+	r.Delete("/projects/{name}", projectHandler.LeaveProject)
+
+	r.Post("/projects/{name}/tasks", projectHandler.CreateProjectTask)
 	// r.Get("/projects/{name}/tasks", projectHandler.GetAllProjectTasks)
 
 	root.Mount("/api", r)

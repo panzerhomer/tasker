@@ -30,7 +30,7 @@ func (h *UserHandler) GetHello(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("hello, " + strconv.Itoa(int(userID))))
 }
 
-func (h *UserHandler) Signin(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	var user domain.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		response(w, "invalid data", http.StatusBadRequest)

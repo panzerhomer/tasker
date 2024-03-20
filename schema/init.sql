@@ -32,8 +32,10 @@ CREATE TABLE tasks (
     deadline TIMESTAMPTZ,
     project_id INT,
     assigned_user_id INT,
+    author_id INT,
     FOREIGN KEY (project_id) REFERENCES projects(project_id),
-    FOREIGN KEY (assigned_user_id) REFERENCES users(user_id)
+    FOREIGN KEY (assigned_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (author_id) REFERENCES users(user_id)
 );
 
 -- CREATE TABLE task_assignments (

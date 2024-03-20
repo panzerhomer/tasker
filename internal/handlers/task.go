@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"rest/internal/domain"
 	"rest/internal/services"
@@ -23,6 +22,8 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// projectNameParam := chi.URLParam(r, "name")
+
 	var task domain.Task
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 		response(w, "invalid data", http.StatusBadRequest)
@@ -33,11 +34,9 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		response(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println("handler task", userID)
 
 	err := h.taskServo.CreateTask(ctx, userID, &task)
 	if err != nil {
-		// log.Println("task handler 3", task, err)
 		response(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

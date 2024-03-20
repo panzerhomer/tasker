@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 	"rest/internal/domain"
 	"rest/internal/lib/hasher"
 	"rest/internal/lib/jwt"
@@ -29,9 +28,7 @@ func (s *userService) Login(ctx context.Context, user *domain.User) (string, err
 		return "", err
 	}
 
-	// log.Println("[service]", user)
-	token, err := jwt.NewToken(u, time.Minute*5)
-	log.Println("[service]", user, token, "d", err)
+	token, err := jwt.NewToken(u, time.Minute*15)
 
 	if err != nil {
 		return "", err

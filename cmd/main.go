@@ -27,7 +27,6 @@ func main() {
 		cfg.Database.SSLMode,
 	)
 
-	// log.Println(dsn)
 	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
 		log.Fatalf("unable to connect to database: %v\n", err)
@@ -49,7 +48,7 @@ func main() {
 	taskHandler := handlers.NewTaskHandler(taskService)
 
 	projectRepo := repository.NewProjectRepo(conn)
-	projectService := services.NewProjectService(projectRepo)
+	projectService := services.NewProjectService(projectRepo, taskRepo)
 	projectHandler := handlers.NewProjectHandler(projectService)
 
 	r := handlers.Routes(userHandler, taskHandler, projectHandler)

@@ -18,7 +18,13 @@ type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Role     int8
+}
+
+type ProjectUser struct {
+	ID       int64  `json:"user_id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     int8   `json:"role,omitempty"`
 }
 
 func (u *User) Validate() error {

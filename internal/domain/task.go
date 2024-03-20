@@ -7,19 +7,25 @@ import (
 )
 
 const (
-	StatusInProcess = iota + 1
-	StatusDone
+	ToDo = iota + 1
+	InProgress
+	InReview
+	Done
+	Blocked
 )
 
 type Task struct {
-	ID          int64
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Deadline    time.Time `json:"deadline"`
+	ID             int64
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Deadline       string `json:"deadline"`
+	AssignedUserID int64  `json:"assigned_user_id"`
+	AuthorID       int64  `json:"author_id"`
+	Status         int8   `json:"status"`
 }
 
 func (t *Task) Validate() error {
-	if len(t.Name) < 1 {
+	if t.Name == "" {
 		return fmt.Errorf("task name is too short")
 	}
 
@@ -36,15 +42,17 @@ func (t *Task) Validate() error {
 		return fmt.Errorf("name must contain letters only")
 	}
 
-	// layout := "02/01/2006"
+	layout := "1/2/2006" // Specify the layout of the date string
 
-	// parsedDate, err := time.Parse(layout, t.Deadline.String())
-	// if err != nil {
-	// 	fmt.Println("Ошибка парсинга даты:", err)
-	// 	return nil
-	// }
+	parsedTime, err := time.Parse(layout, t.Deadline)
+	if err != nil {
+		fmt.Println("Error parsing date:", err)
+		return
+	}
 
-	// fmt.Println("Распарсенная дата:", time.Date())
+	t.Status = ToDo
 
 	return nil
 }
+
+func parseDateFrom(date string) time.Time
