@@ -4,11 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
 	"rest/internal/config"
 	"rest/internal/handlers"
 	"rest/internal/repository"
 	"rest/internal/services"
+	"syscall"
+
+	"rest/internal/server"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -16,7 +20,11 @@ import (
 var ctx = context.Background()
 
 func main() {
-	cfg, _ := config.LoadConfig()
+	cfg, err := config.LoadConfig()
+	log.Println(cfg, err)
+	if err != nil {
+		log.Fatalf("error occured while loading config: %v\n", err)
+	}
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		cfg.Database.Host,
@@ -37,23 +45,34 @@ func main() {
 		log.Fatalf("can't ping db: %s", err)
 	}
 
-	//conn.Exec(ctx, "DELETE FROM users")
-
 	userRepo := repository.NewUserRepo(conn)
 	userService := services.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
 	taskRepo := repository.NewTaskRepo(conn)
-	taskService := services.NewTaskService(taskRepo)
-	taskHandler := handlers.NewTaskHandler(taskService)
 
 	projectRepo := repository.NewProjectRepo(conn)
 	projectService := services.NewProjectService(projectRepo, taskRepo)
 	projectHandler := handlers.NewProjectHandler(projectService)
 
-	r := handlers.Routes(userHandler, taskHandler, projectHandler)
-	log.Println("server is running")
-	if err := http.ListenAndServe(":3000", r); err != nil {
-		log.Fatal("server stopped with ", err)
+	routes := handlers.Routes(userHandler, nil, projectHandler)
+
+	httpServer := new(server.Server)
+	go func() {
+		if err := httpServer.Run(cfg, routes); err != nil {
+			log.Fatalf("error occured while running http server: %s", err.Error())
+		}
+	}()
+
+	log.Print("server is running")
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	log.Print("server is shutting down")
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Fatalf("error occured on server shutting down: %s", err.Error())
 	}
 }
