@@ -34,13 +34,10 @@ go run main.go
 
 ## Tasks
 - **POST /projects/{name}/tasks**:
-  - Creates a new task within a project.
+  - Creates a new task within a project and assigns to user if admin.
 - **GET /projects/{name}/tasks**:
   - Returns a list of tasks for the project.
 
 ## Search
 - **GET /projects/search**:
   - Search project by name usign page
-
-
- simple rest api 
