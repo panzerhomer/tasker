@@ -1,7 +1,6 @@
 # Tasker
 
 Project management tool
-REST API
 
 # Installation
 ```
